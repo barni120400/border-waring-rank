@@ -72,11 +72,41 @@ F2 = alpha * x_2^3 + 3*x_0*x_1^2*x_2;  -- at d=3
 gd2 = genericDForm(F2, 3);
 assert'("Alpha form contains \\alpha", match("\\\\alpha", gd2));
 
+-- genericDForm ratio logic:
+-- For alpha*x_2^3 at d=3: expected multinomial = 3!/(0!*3!) = 1, ratio = alpha/1 = alpha
+-- So output should be "\alpha \binom{d}{3}"
+assert'("Alpha ratio: alpha*x^3 -> \\alpha \\binom{d}{3}", match("\\\\alpha.*\\\\binom\\{d\\}\\{3\\}", gd2));
+
+-- For 3*x_0*x_1^2*x_2 at d=3: expected multinomial = 3!/(1!*2!*0!*...) wait no
+-- Actually this is 3*x_0^1*x_1^2*x_2^0... no, it's x_0^1*x_1^2*x_2^1
+-- Expected = 3!/(1!*2!*0!) = ... let me think. Exponents are (a=1, e_1=2, e_2=0) for x_0^1 x_1^2
+-- Wait, F2 = alpha*x_2^3 + 3*x_0*x_1^2*x_2 means the second term is 3*x_0^1*x_1^2*x_2^1
+-- Expected multinomial = 3!/(1!*2!*1!*...) but we only count nonzero exps
+-- Full exponent vector: (1, 2, 0) for x_0, x_1, x_2... no, the term is x_0*x_1^2*x_2
+-- so exps = (1, 2, 0)... wait x_2 has exponent 0? No: 3*x_0*x_1^2*x_2 = x_0^1 x_1^2 x_2^1
+-- So a=1 (x_0), e_1=2 (x_1), e_2=1 (x_2). Expected = 3!/(1!*2!*1!*0!) = 6/2 = 3
+-- Actual coeff = 3, ratio = 3/3 = 1. So no prefix.
+assert'("Standard multinomial term has no ratio prefix", not match("\\\\alpha.*\\\\binom\\{d\\}\\{2, 1\\}", gd2));
+
 -- Negative coefficient
 R3 = (ZZ/p)[x_0, x_1, x_2];
-F3 = -3*x_0*x_1*x_2 + x_1^3;  -- at d=3, multinomial(1,1,1)=6, ratio=-3/6=-1/2
+F3 = -3*x_0*x_1*x_2 + x_1^3;  -- at d=3, multinomial = 3!/(1!*1!*1!) = 6, ratio = -3/6 = -1/2
 gd3 = genericDForm(F3, 3);
 assert'("Negative term uses - not + -", not match("\\+ -", gd3));
+
+-- Test with the actual A_{8,3,9} form (the real alpha example)
+pair839 = generateGorensteinAlgebra(8, 3, 9, deformed=>false);
+A839form = pair839#0;
+wts839 = pair839#1;
+sd839 = computeSocleDegree(A839form);
+form839 = extractBorderForms(A839form, wts839, sd839);
+gd839 = genericDForm(form839, sd839);
+-- The form should contain alpha in exactly the right places
+assert'("A_{8,3,9} form contains \\alpha", match("\\\\alpha", gd839));
+-- Every term should have either a \binom or be x_0^d (no raw numeric coefficients)
+assert'("A_{8,3,9} form: no raw large numbers", not match("[0-9][0-9]", gd839));
+-- Check alpha appears with binom, not alone
+assert'("A_{8,3,9} form: alpha paired with \\binom", match("\\\\alpha.*\\\\binom", gd839));
 
 -- ============================================================
 stdio << endl << "=== isConnectedSum (intrinsic) ===" << endl;
