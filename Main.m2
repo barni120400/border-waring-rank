@@ -322,14 +322,19 @@ idealStr = concatenate between(",\\; ", apply(idealGens, g -> cleanTex g));
 -- Format variable list for the ring
 varListStr = concatenate between(", ", apply(flatten entries vars(ambient algebra), v -> cleanTex v));
 
--- First line: algebra name = K[vars]/(ideal)
-outFile << "\\item \\label{" << labelStr << "} $" << algebraName << " = \\bK[" << varListStr << "]/(" << idealStr << ")$." << endl;
+-- Algebra name as header
+outFile << "\\item \\label{" << labelStr << "} $" << algebraName << "$." << endl;
+outFile << endl;
 
--- Basis inline
+-- Description list for structured fields
+outFile << "\\begin{description}[leftmargin=1.5cm, style=sameline]" << endl;
+outFile << "\\item[Ideal] $(" << idealStr << ") \\subset \\bK[" << varListStr << "]$" << endl;
+
+-- Basis
 basisStr = concatenate between(",\\; ", apply(sortedBasisA, b -> cleanTex b));
-outFile << "Basis: $" << basisStr << "$." << endl;
+outFile << "\\item[Basis] $" << basisStr << "$" << endl;
 
--- Weights inline (or note about no grading)
+-- Weights (or note about no grading)
 if variableWeights != {} then (
     weightVals = apply(dimA, i -> toString(
         if i == 0 then 0
@@ -338,9 +343,9 @@ if variableWeights != {} then (
             sum apply(length variableWeights, j -> exps#j * variableWeights#j)
         )
     ));
-    outFile << "Weights: $\\vw = (" << concatenate between(", ", weightVals) << ")$." << endl;
+    outFile << "\\item[Weights] $\\vw = (" << concatenate between(", ", weightVals) << ")$" << endl;
 ) else (
-    outFile << "This algebra does not admit a grading." << endl;
+    outFile << "\\item[Weights] This algebra does not admit a grading." << endl;
 );
 
 -- Connected sum detection
@@ -359,21 +364,20 @@ if #csComponents > 1 then (
             "[A_{" | toString(d) | "," | toString(nGens) | ",?}]"
         )
     ));
-    outFile << "Connected sum: $" << algebraName << " = " << concatenate between(" \\# ", compDescs) << "$." << endl;
+    outFile << "\\item[Decomposition] $" << algebraName << " = " << concatenate between(" \\# ", compDescs) << "$" << endl;
 );
 
--- Form as display math
-outFile << "\\[" << endl;
-outFile << "F = " << genericDForm(form, formDegree) << endl;
-outFile << "\\]" << endl;
+-- Canonical form
+outFile << "\\item[Canonical form]~\\\\" << endl;
+outFile << "$\\displaystyle F = " << genericDForm(form, formDegree) << "$" << endl;
 
--- Apolar ideal as display math
-outFile << "Apolar ideal:" << endl;
-outFile << "\\[" << endl;
-outFile << "(" << endl;
+-- Apolar ideal
+outFile << "\\item[Apolar ideal]~\\\\" << endl;
+outFile << "$(" << endl;
 outFile << genericDApolarIdeal(apolarIdeal, formDegree) << endl;
-outFile << ")" << endl;
-outFile << "\\]" << endl;
+outFile << ")$" << endl;
+
+outFile << "\\end{description}" << endl;
 
 outFile << close;
 print("Wrote " | autoFileName);
