@@ -1,0 +1,18 @@
+Intrinsic connected sum detection for all n=2 algebras
+======================================================
+
+A_{6,2,2}: connected sum = true
+A_{6,2,3}: connected sum = true
+A_{6,2,4}: connected sum = false
+A_{6,2,5}: connected sum = true
+A_{7,2,2}: connected sum = true
+A_{7,2,3}: connected sum = true
+A_{7,2,5}: connected sum = false
+A_{8,2,2}: connected sum = true
+A_{8,2,3}: connected sum = true
+A_{8,2,5}: connected sum = false
+A_{8,2,6}: connected sum = true
+A_{8,2,7}: connected sum = false
+A_{8,2,8}: connected sum = false
+
+DONE.

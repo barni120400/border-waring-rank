@@ -1,0 +1,31 @@
+VERIFICATION: A_{7,3,3} isomorphic to A_{7,3,5}
+================================================
+Working over QQ(sqrt(2)) since the isomorphism requires sqrt(2).
+
+Type 3: K[x,y,z]/(xy, y^3-x^3, xz, yz, z^2-x^3)
+Type 5: K[x,y,z]/(x^2*y, y^2-x^2, xz, yz, z^2-x^3)
+K = QQ(sqrt(2)), sqrt(2) = s
+dim(Type 3) = 7
+dim(Type 5) = 7
+
+CHECK 1: phi: Type5 -> Type3 via x->x+y, y->-x+y, z->s*z
+  isWellDefined(phi) = true
+CHECK 2: kernel(phi) = 0?
+  kernel(phi) == 0: true
+CHECK 3: psi: Type3 -> Type5 via x->(x-y)/2, y->(x+y)/2, z->(s/2)*z
+  isWellDefined(psi) = true
+CHECK 4: kernel(psi) = 0?
+  kernel(psi) == 0: true
+CHECK 5: phi o psi = id on Type3?
+  phi(psi(x)) == x: true
+  phi(psi(y)) == y: true
+  phi(psi(z)) == z: true
+CHECK 6: psi o phi = id on Type5?
+  psi(phi(x)) == x: true
+  psi(phi(y)) == y: true
+  psi(phi(z)) == z: true
+
+SUMMARY
+=======
+All 10 checks pass: true
+CONCLUSION: A_{7,3,3} and A_{7,3,5} are isomorphic over any algebraically closed field of char != 2.
