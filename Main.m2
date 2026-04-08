@@ -338,7 +338,7 @@ if variableWeights != {} then (
             sum apply(length variableWeights, j -> exps#j * variableWeights#j)
         )
     ));
-    outFile << "Weights: $\\vq = (" << concatenate between(", ", weightVals) << ")$." << endl;
+    outFile << "Weights: $\\vw = (" << concatenate between(", ", weightVals) << ")$." << endl;
 ) else (
     outFile << "This algebra does not admit a grading." << endl;
 );
