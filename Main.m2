@@ -234,8 +234,10 @@ isConnectedSum = A -> (
     n := #varList;
     if n <= 1 then return false;
     -- Polynomial ring: alpha_0..alpha_{n-1}, dI1 (v != 0), dI2 (v^2 != 0)
+    -- Use the algebra's coefficient ring (may contain alpha parameter)
+    baseField := coefficientRing A;
     varNames := apply(n, i -> (symbol al)_i) | {(symbol dI1), (symbol dI2)};
-    S := (ZZ/p)[varNames];
+    S := baseField[varNames];
     aVars := apply(n, i -> S_i);
     dI1v := S_n;
     dI2v := S_(n+1);
@@ -245,7 +247,7 @@ isConnectedSum = A -> (
         for i from 0 to n-1 do (
             prod := varList#i * varList#j;
             coeff := coefficient(lift(basisA#k, ambA), lift(prod, ambA));
-            c = c + aVars#i * sub(coeff, ZZ/p);
+            c = c + aVars#i * sub(coeff, S);
         );
         c
     )));
@@ -258,7 +260,7 @@ isConnectedSum = A -> (
         for i from 0 to n-1 do for j from 0 to n-1 do (
             prod := varList#i * varList#j;
             coeff := coefficient(lift(basisA#k, ambA), lift(prod, ambA));
-            c = c + aVars#i * aVars#j * sub(coeff, ZZ/p);
+            c = c + aVars#i * aVars#j * sub(coeff, S);
         );
         c
     ));
@@ -615,14 +617,19 @@ if isCS then (
 );
 
 -- Canonical form
-outFile << "\\item[Canonical form]~\\\\" << endl;
-outFile << "$\\displaystyle F = " << genericDForm(form, formDegree) << "$" << endl;
+-- Canonical form (use display math for line wrapping)
+outFile << "\\item[Canonical form]" << endl;
+outFile << "\\[" << endl;
+outFile << "F = " << genericDForm(form, formDegree) << endl;
+outFile << "\\]" << endl;
 
--- Apolar ideal
-outFile << "\\item[Apolar ideal]~\\\\" << endl;
-outFile << "$(" << endl;
+-- Apolar ideal (use display math for line wrapping)
+outFile << "\\item[Apolar ideal]" << endl;
+outFile << "\\[" << endl;
+outFile << "(" << endl;
 outFile << genericDApolarIdeal(apolarIdeal, formDegree) << endl;
-outFile << ")$" << endl;
+outFile << ")" << endl;
+outFile << "\\]" << endl;
 
 outFile << "\\end{description}" << endl;
 
