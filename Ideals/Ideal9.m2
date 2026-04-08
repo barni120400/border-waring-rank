@@ -2,14 +2,15 @@
 
 load "../Parameters.m2"
 
-generateIdeal9 = (e, n, alpha) -> (
+generateIdeal9 = (e, n, alphaVal) -> (
     if not (8 <= n+5 and n + 5 == e and e <= 9) then (
         error "Ideal9 requires 8 <= n+5 = e <= 9";
     );
-    K = frac(ZZ/p[epsilon]);
+    K = frac(ZZ/p[epsilon, alpha]);
     R = K[y_1..y_n];
-    -- Initial generators for the 10th form
-    Glist = { y_1*y_2 + y_3^2, y_1*y_3, y_1^2 + y_2^2 - alpha*y_3^2 };
+    a = if alphaVal === null then sub(alpha, K) else sub(alphaVal, K);
+    -- Initial generators
+    Glist = { y_1*y_2 + y_3^2, y_1*y_3, y_1^2 + y_2^2 - a*y_3^2 };
     -- If n > 3, add cross terms and cubics for higher variables
     for j from 4 to n do (
         for i from 1 to j-1 do (

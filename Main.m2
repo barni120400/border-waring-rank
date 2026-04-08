@@ -25,7 +25,10 @@ computeSocleDegree = A -> (
 -- Strip $...$ from M2's tex output
 cleanTex = x -> (
     s := tex x;
-    if #s >= 2 and s#0 == "$" and s#(#s-1) == "$" then substring(1, #s-2, s) else s
+    s = if #s >= 2 and s#0 == "$" and s#(#s-1) == "$" then substring(1, #s-2, s) else s;
+    -- Replace M2's \mathit{alpha} with \alpha
+    s = replace("\\\\mathit\\{alpha\\}", "\\\\alpha", s);
+    s
 );
 
 -- ============================================================

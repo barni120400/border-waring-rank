@@ -96,7 +96,7 @@ generateGorensteinAlgebra (ZZ, ZZ, ZZ) := opts -> (e, n, f) -> (
             else if f == 6 then generateIdeal6(e, n)
             else if f == 7 then generateIdeal7(e, n)
             else if f == 8 then generateIdeal8(e, n)
-            else if f == 9 then generateIdeal9(e, n, 5) -- Note: just hardcoded 5 as alpha
+            else if f == 9 then generateIdeal9(e, n, null) -- alpha kept symbolic
             else if f == 10 then generateIdeal10(e, n)
             else if f == 11 then generateIdeal11(e, n)
             else if f == 12 then generateIdeal12(e, n)
@@ -104,7 +104,7 @@ generateGorensteinAlgebra (ZZ, ZZ, ZZ) := opts -> (e, n, f) -> (
             else if f == 14 then generateIdeal14(e, n)
             else if f == 15 then generateIdeal15(e, n)
             else if f == 16 then generateIdeal16(e, n)
-            else if f == 17 then generateIdeal17(e, n, 5) -- Note: just hardcoded 5 as alpha
+            else if f == 17 then generateIdeal17(e, n, null) -- alpha kept symbolic
             else if f == 18 then generateIdeal18(e, n)
             else if f == 19 then generateIdeal19(e, n)
             else if f == 20 then generateIdeal20(e, n)
@@ -124,9 +124,10 @@ generateGorensteinAlgebra (ZZ, ZZ, ZZ) := opts -> (e, n, f) -> (
         try (
             -- Substitute epsilon=0 in the ideal
             I = substitute(I, {epsilon => 0});
-            -- Create a new ring with ZZ/p as coefficient field
             varList := gens R;
-            newR := (ZZ/p)[varList];
+            -- Ideal9 and Ideal17 use alpha as a symbolic parameter
+            newCoeffRing := if f == 9 or f == 17 then frac(ZZ/p[alpha]) else ZZ/p;
+            newR := newCoeffRing[varList];
             -- Substitute the ideal into the new ring
             I = substitute(I, newR);
             R = newR;
