@@ -72,16 +72,31 @@ computeWeights = (R, I) -> (
         return flatten entries (gens K)_{0};
     );
 
-    -- Multiple weight assignments: pick a column with all non-negative entries
+    -- Multiple weight assignments: pick a column with all positive entries
     print ("NOTE: Multiple weight assignments (kernel rank " | toString(rank K) | "), picking one");
     G := gens K;
     numCols := numColumns G;
-    candidates := select(apply(numCols, i -> flatten entries G_{i}), col -> all(col, c -> c >= 0));
-    if #candidates > 0 then return candidates#0;
-    -- If no single column is non-negative, try the sum of all columns
-    sumCol := apply(numRows G, i -> sum apply(numCols, j -> (flatten entries G_{j})#i));
-    if all(sumCol, c -> c >= 0) then return sumCol;
-    -- Last resort: return first column
+    -- Try each column, also its negation
+    for i from 0 to numCols - 1 do (
+        col := flatten entries G_{i};
+        if all(col, c -> c > 0) then return col;
+        negCol := apply(col, c -> -c);
+        if all(negCol, c -> c > 0) then return negCol;
+    );
+    -- Try linear combinations: sum, difference, and small multiples
+    for a from -3 to 3 do (
+        for b from -3 to 3 do (
+            if a == 0 and b == 0 then continue;
+            if numCols < 2 and b != 0 then continue;
+            combo := apply(numRows G, i -> (
+                val := a * (flatten entries G_{0})#i;
+                if numCols >= 2 then val = val + b * (flatten entries G_{1})#i;
+                val
+            ));
+            if all(combo, c -> c > 0) then return combo;
+        );
+    );
+    -- Last resort: return first column (may have negatives)
     return flatten entries G_{0};
 );
 
