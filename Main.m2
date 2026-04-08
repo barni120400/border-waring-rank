@@ -283,8 +283,8 @@ validTypes = (d, k) -> (
     if k >= 2 and d >= k + 4 then result = append(result, 3);
     -- Ideal 4: n >= 2, e = n+4
     if k >= 2 and d == k + 4 then result = append(result, 4);
-    -- Ideal 5: n >= 2, e >= n+4
-    if k >= 2 and d >= k + 4 then result = append(result, 5);
+    -- Ideal 5: n >= 2, e >= n+5 (e=n+4 is isomorphic to type 3, see rem:type-3-5-isomorphism)
+    if k >= 2 and d >= k + 5 then result = append(result, 5);
     -- Ideal 6: n >= 2, e = n+6
     if k >= 2 and d == k + 6 then result = append(result, 6);
     -- Ideal 7: n >= 2, e = n+6
@@ -407,15 +407,23 @@ identifyComponentType = (A, componentIndices) -> (
     subSocleDeg := computeSocleDegree(subAlg);
     subHilbert := apply(0..subSocleDeg, deg -> hilbertFunction(deg, subAlg));
     candidates := validTypes(d, k);
+    -- First pass: check for EXACT ideal equality (preferred — gives natural type label)
+    for t in candidates do (
+        candidatePair := try generateGorensteinAlgebra(d, k, t, deformed=>false) else continue;
+        candAlg := candidatePair#0;
+        ambCand := ambient candAlg;
+        mapToSubR := map(subR, ambCand, gens subR);
+        candGens := flatten entries gens ideal candAlg;
+        candIdealInSubR := ideal apply(candGens, g -> mapToSubR lift(g, ambCand));
+        if subIdeal == candIdealInSubR then return (d, k, t);
+    );
+    -- Second pass: check GL_k orbit isomorphism (for when ideals differ but algebras are isomorphic)
     for t in candidates do (
         candidatePair := try generateGorensteinAlgebra(d, k, t, deformed=>false) else continue;
         candAlg := candidatePair#0;
         candSocleDeg := computeSocleDegree(candAlg);
         candHilbert := apply(0..candSocleDeg, deg -> hilbertFunction(deg, candAlg));
-        -- Quick filter: Hilbert functions must match
         if subHilbert != candHilbert then continue;
-        -- Full check: are the ideals isomorphic via GL_k?
-        -- Map candidate ideal generators to subR (y_i -> z_i)
         ambCand := ambient candAlg;
         mapToSubR := map(subR, ambCand, gens subR);
         candGens := flatten entries gens ideal candAlg;

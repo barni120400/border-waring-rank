@@ -3,8 +3,8 @@
 load "../Parameters.m2"
 
 generateIdeal5 = (e, n) -> (
-    if not (6 <= n+4 and n+4 <= e and e <= 9) then (
-        error "Ideal5 requires 6 ≤ n+4 ≤ e ≤ 9";
+    if not (7 <= n+5 and n+5 <= e and e <= 9) then (
+        error "Ideal5 requires 7 ≤ n+5 ≤ e ≤ 9 (e=n+4 is isomorphic to type 3)";
     );
     K = frac(ZZ/p[epsilon]);
     R = K[y_1..y_n];
