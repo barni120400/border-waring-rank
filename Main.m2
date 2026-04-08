@@ -512,8 +512,9 @@ identifyComponentType = (A, componentIndices) -> (
 );
 
 -- ============================================================
--- Main computation
+-- Main computation (skipped when TESTING flag is set)
 -- ============================================================
+if not (try TESTING else false) then (
 
 pair = generateGorensteinAlgebra(idealDegree, numVars, idealNumber, deformed=>false);
 algebra = pair#0;
@@ -633,31 +634,31 @@ print("Wrote " | autoFileName);
 -- ============================================================
 
 multFileName = "output/mult_e" | toString(idealDegree) | "_n" | toString(numVars) | "_i" | toString(idealNumber) | ".tex";
-multFile = multFileName << "";
-
-multFile << "% Multiplication operators for e=" << idealDegree << ", n=" << numVars << ", idealNumber=" << idealNumber << endl;
-multFile << "Multiplication operators:" << endl;
-multFile << "\\[" << endl;
-multFile << "\\begin{aligned}" << endl;
-
-for i from 0 to #MTs - 1 do (
-    mtPair = MTs#i;
-    mtNum = mtPair#0;
-    mtDen = mtPair#1;
-    -- Compute the actual matrix M^T = mtNum / mtDen
-    mtMatrix = (1/mtDen) * mtNum;
-    varIdx = i + 1;
-    sep = if i < #MTs - 1 and i % 2 == 0 then ","
-          else if i < #MTs - 1 and i % 2 == 1 then ""
-          else ".";
-    lineBreak = if i < #MTs - 1 and i % 2 == 1 then "\n\\\\[1.2em]" else "";
-    qquad = if i % 2 == 1 or i == #MTs - 1 then "" else "\n\\qquad";
-    multFile << "M_{x_" << varIdx << "}^T &=" << endl;
-    multFile << texMatrix(mtMatrix) << sep << qquad << lineBreak << endl;
+if MTs =!= null then (
+    multFile = multFileName << "";
+    multFile << "% Multiplication operators for e=" << idealDegree << ", n=" << numVars << ", idealNumber=" << idealNumber << endl;
+    multFile << "Multiplication operators:" << endl;
+    multFile << "\\[" << endl;
+    multFile << "\\begin{aligned}" << endl;
+    for i from 0 to #MTs - 1 do (
+        mtPair = MTs#i;
+        mtNum = mtPair#0;
+        mtDen = mtPair#1;
+        mtMatrix = (1/mtDen) * mtNum;
+        varIdx = i + 1;
+        sep = if i < #MTs - 1 and i % 2 == 0 then ","
+              else if i < #MTs - 1 and i % 2 == 1 then ""
+              else ".";
+        lineBreak = if i < #MTs - 1 and i % 2 == 1 then "\n\\\\[1.2em]" else "";
+        qquad = if i % 2 == 1 or i == #MTs - 1 then "" else "\n\\qquad";
+        multFile << "M_{x_" << varIdx << "}^T &=" << endl;
+        multFile << texMatrix(mtMatrix) << sep << qquad << lineBreak << endl;
+    );
+    multFile << "\\end{aligned}" << endl;
+    multFile << "\\]" << endl;
+    multFile << close;
+    print("Wrote " | multFileName);
+) else (
+    print("Skipped multiplication operators (symbolic coefficients)");
 );
-
-multFile << "\\end{aligned}" << endl;
-multFile << "\\]" << endl;
-
-multFile << close;
-print("Wrote " | multFileName);
+); -- end of TESTING guard
