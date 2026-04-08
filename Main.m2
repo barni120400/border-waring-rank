@@ -446,7 +446,7 @@ identifyComponentType = (A, componentIndices) -> (
     -- Compute the subalgebra ideal via kernel of inclusion map
     varList := flatten entries vars A;
     compVars := apply(componentIndices, i -> varList#i);
-    baseField := ZZ/p;
+    baseField := coefficientRing A;
     subR := baseField[z_1..z_k, MonomialOrder=>GRevLex];
     phi := map(A, subR, compVars);
     subIdeal := trim kernel phi;
