@@ -5,7 +5,7 @@ load "ExtractBorderForms.m2"
 -- ============================================================
 -- Parameters (edit these)
 -- ============================================================
-idealDegree = 5;
+idealDegree = 2;
 numVars = 1;
 idealNumber = 1;
 
