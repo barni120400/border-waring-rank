@@ -234,7 +234,8 @@ MTs = apply(varsList, v -> multiplicationOperatorTranspose(v, H, B, ML));
 -- Output: example.tex (paper-facing, no multiplication operators)
 -- ============================================================
 
-outFile = "output/example.tex" << "";
+autoFileName = "output/auto_e" | toString(idealDegree) | "_n" | toString(numVars) | "_i" | toString(idealNumber) | ".tex";
+outFile = autoFileName << "";
 
 outFile << "\\item Parameters from Casnati's paper:" << endl;
 outFile << "\\[" << endl;
@@ -264,19 +265,21 @@ outFile << genericDForm(form, formDegree) << endl;
 outFile << "\\]" << endl;
 outFile << endl;
 
-outFile << "Variable weights:" << endl;
-outFile << "\\[" << endl;
--- Build weights from the sorted basis elements (matching x_i assignment)
-weightStrs = apply(dimA, i -> "q_" | toString(i) | " = " | toString(
-    if i == 0 then 0
-    else (
-        exps := flatten exponents sortedBasisA#i;
-        sum apply(length variableWeights, j -> exps#j * variableWeights#j)
-    )
-));
-outFile << concatenate between(",\\; ", weightStrs) << endl;
-outFile << "\\]" << endl;
-outFile << endl;
+-- Only show variable weights if the algebra admits a grading
+if variableWeights != {} then (
+    outFile << "Variable weights:" << endl;
+    outFile << "\\[" << endl;
+    weightStrs = apply(dimA, i -> "q_" | toString(i) | " = " | toString(
+        if i == 0 then 0
+        else (
+            exps := flatten exponents sortedBasisA#i;
+            sum apply(length variableWeights, j -> exps#j * variableWeights#j)
+        )
+    ));
+    outFile << concatenate between(",\\; ", weightStrs) << endl;
+    outFile << "\\]" << endl;
+    outFile << endl;
+);
 
 outFile << "Apolar ideal:" << endl;
 outFile << "\\[" << endl;
@@ -286,18 +289,19 @@ outFile << ")" << endl;
 outFile << "\\]" << endl;
 
 outFile << close;
-print("Wrote output/example.tex");
+print("Wrote " | autoFileName);
 
 -- ============================================================
--- Output: draft.tex (multiplication operators)
+-- Output: mult_*.tex (multiplication operators)
 -- ============================================================
 
-draftFile = "output/draft.tex" << "";
+multFileName = "output/mult_e" | toString(idealDegree) | "_n" | toString(numVars) | "_i" | toString(idealNumber) | ".tex";
+multFile = multFileName << "";
 
-draftFile << "% Multiplication operators for e=" << idealDegree << ", n=" << numVars << ", idealNumber=" << idealNumber << endl;
-draftFile << "Multiplication operators:" << endl;
-draftFile << "\\[" << endl;
-draftFile << "\\begin{aligned}" << endl;
+multFile << "% Multiplication operators for e=" << idealDegree << ", n=" << numVars << ", idealNumber=" << idealNumber << endl;
+multFile << "Multiplication operators:" << endl;
+multFile << "\\[" << endl;
+multFile << "\\begin{aligned}" << endl;
 
 for i from 0 to #MTs - 1 do (
     mtPair = MTs#i;
@@ -311,12 +315,12 @@ for i from 0 to #MTs - 1 do (
           else ".";
     lineBreak = if i < #MTs - 1 and i % 2 == 1 then "\n\\\\[1.2em]" else "";
     qquad = if i % 2 == 1 or i == #MTs - 1 then "" else "\n\\qquad";
-    draftFile << "M_{x_" << varIdx << "}^T &=" << endl;
-    draftFile << texMatrix(mtMatrix) << sep << qquad << lineBreak << endl;
+    multFile << "M_{x_" << varIdx << "}^T &=" << endl;
+    multFile << texMatrix(mtMatrix) << sep << qquad << lineBreak << endl;
 );
 
-draftFile << "\\end{aligned}" << endl;
-draftFile << "\\]" << endl;
+multFile << "\\end{aligned}" << endl;
+multFile << "\\]" << endl;
 
-draftFile << close;
-print("Wrote output/draft.tex");
+multFile << close;
+print("Wrote " | multFileName);
