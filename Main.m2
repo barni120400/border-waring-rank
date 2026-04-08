@@ -265,7 +265,6 @@ outFile << genericDForm(form, formDegree) << endl;
 outFile << "\\]" << endl;
 outFile << endl;
 
--- Only show variable weights if the algebra admits a grading
 if variableWeights != {} then (
     outFile << "Variable weights:" << endl;
     outFile << "\\[" << endl;
@@ -278,6 +277,9 @@ if variableWeights != {} then (
     ));
     outFile << concatenate between(",\\; ", weightStrs) << endl;
     outFile << "\\]" << endl;
+    outFile << endl;
+) else (
+    outFile << "This algebra does not admit a grading." << endl;
     outFile << endl;
 );
 
