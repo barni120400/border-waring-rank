@@ -1,0 +1,27 @@
+VERIFICATION: A_{6,2,3} isomorphic to A_{6,2,5}
+================================================
+
+Type 3: QQ[x,y]/(xy, y^3-x^3)
+Type 5: QQ[x,y]/(x^2*y, y^2-x^2)
+dim(Type 3) = 6
+dim(Type 5) = 6
+
+CHECK 1: phi: Type5 -> Type3 via x->x+y, y->-x+y
+  isWellDefined(phi) = true
+CHECK 2: kernel(phi) = 0?
+  kernel(phi) == 0: true
+CHECK 3: psi: Type3 -> Type5 via x->(x-y)/2, y->(x+y)/2
+  isWellDefined(psi) = true
+CHECK 4: kernel(psi) = 0?
+  kernel(psi) == 0: true
+CHECK 5: phi(psi(x)) = x and phi(psi(y)) = y in Type3?
+  phi(psi(x)) == x: true
+  phi(psi(y)) == y: true
+CHECK 6: psi(phi(x)) = x and psi(phi(y)) = y in Type5?
+  psi(phi(x)) == x: true
+  psi(phi(y)) == y: true
+
+SUMMARY
+=======
+All 8 checks pass: true
+CONCLUSION: A_{6,2,3} and A_{6,2,5} are isomorphic over QQ.
