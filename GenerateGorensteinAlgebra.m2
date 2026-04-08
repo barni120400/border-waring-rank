@@ -66,38 +66,68 @@ computeWeights = (R, I) -> (
     -- Solve for the nullspace
     K := kernel M;
 
-    if rank K == 0 then error("The ideal cannot being homogenized");
+    if rank K == 0 then error("The ideal cannot be homogenized");
 
-    if rank K == 1 then (
-        return flatten entries (gens K)_{0};
+    n := numRows (gens K);
+    rkK := rank K;
+
+    -- Helper: check if a weight vector is valid (all entries > 0)
+    isValid := w -> all(w, c -> c > 0);
+
+    -- Helper: check if all entries are equal (uniform weight = 1 after scaling)
+    isUniform := w -> (#unique toList w == 1);
+
+    if rkK > 1 then (
+        print ("NOTE: Weight space has dimension " | toString(rkK) | " (kernel rank " | toString(rkK) | ")");
     );
 
-    -- Multiple weight assignments: pick a column with all positive entries
-    print ("NOTE: Multiple weight assignments (kernel rank " | toString(rank K) | "), picking one");
+    -- First: try the uniform weight (1, 1, ..., 1) — check if it's in the kernel
+    uniformW := apply(n, i -> 1);
+    if M * transpose matrix {uniformW} == 0 then (
+        return uniformW;
+    );
+
+    -- Otherwise: search the kernel for a valid positive vector
     G := gens K;
     numCols := numColumns G;
-    -- Try each column, also its negation
-    for i from 0 to numCols - 1 do (
-        col := flatten entries G_{i};
-        if all(col, c -> c > 0) then return col;
+
+    -- For rank 1: just ensure the single generator is positive (negate if needed)
+    if rkK == 1 then (
+        col := flatten entries G_{0};
+        if isValid col then return col;
         negCol := apply(col, c -> -c);
-        if all(negCol, c -> c > 0) then return negCol;
+        if isValid negCol then return negCol;
+        error("Weight vector has both positive and negative entries — no valid grading");
     );
-    -- Try linear combinations: sum, difference, and small multiples
-    for a from -3 to 3 do (
-        for b from -3 to 3 do (
+
+    -- For rank >= 2: search integer linear combinations a_1*v_1 + ... + a_k*v_k
+    -- with all entries > 0. Try small coefficients first.
+    -- Also prefer uniform weights.
+    cols := apply(numCols, i -> flatten entries G_{i});
+    bestW := null;
+    for a from -5 to 5 do (
+        for b from -5 to 5 do (
             if a == 0 and b == 0 then continue;
-            if numCols < 2 and b != 0 then continue;
-            combo := apply(numRows G, i -> (
-                val := a * (flatten entries G_{0})#i;
-                if numCols >= 2 then val = val + b * (flatten entries G_{1})#i;
-                val
-            ));
-            if all(combo, c -> c > 0) then return combo;
+            combo := apply(n, i -> a * cols#0#i + b * cols#1#i);
+            if isValid combo then (
+                if bestW === null or isUniform combo then bestW = combo;
+                if isUniform combo then return combo;  -- found uniform, done
+            );
+            -- Also try with third column if it exists
+            if numCols >= 3 then (
+                for c from -3 to 3 do (
+                    if a == 0 and b == 0 and c == 0 then continue;
+                    combo3 := apply(n, i -> a * cols#0#i + b * cols#1#i + c * cols#2#i);
+                    if isValid combo3 then (
+                        if bestW === null or isUniform combo3 then bestW = combo3;
+                        if isUniform combo3 then return combo3;
+                    );
+                );
+            );
         );
     );
-    -- Last resort: return first column (may have negatives)
-    return flatten entries G_{0};
+    if bestW =!= null then return bestW;
+    error("Could not find a valid positive weight vector");
 );
 
 generateGorensteinAlgebra = method(Options => {deformed => false});
@@ -155,4 +185,5 @@ generateGorensteinAlgebra (ZZ, ZZ, ZZ) := opts -> (e, n, f) -> (
     variableWeights = try computeWeights(R, I) else {};
 
     return {R/I, variableWeights};        -- return the quotient and variable weights
+    -- NOTE: weight space dimension is printed by computeWeights when > 1
 )
