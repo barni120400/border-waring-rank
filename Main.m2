@@ -383,7 +383,8 @@ if #csComponents > 1 then (
         if nGens == 1 then (
             -- Ideal1: A_{d,1,1}, link to its example
             summandLabel := "alg:e" | toString(d) | "_n1_i1";
-            "\\cref{" | summandLabel | "}"
+            summandName := "A_{" | toString(d) | ",1,1}";
+            "\\hyperref[" | summandLabel | "]{" | summandName | "}"
         ) else (
             -- Multi-generator: report dimension and number of generators
             "A_{" | toString(d) | "," | toString(nGens) | ",?}"
