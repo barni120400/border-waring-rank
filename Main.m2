@@ -121,13 +121,18 @@ genericDForm = (F, d) -> (
             if x0Str != "" then termStr = termStr | " ";
             termStr = termStr | varStr;
         );
-        -- Add to result with +/- separator
-        if result == "" then
-            result = termStr
-        else if #termStr > 0 and termStr#0 == "-" then
-            result = result | "\n- " | substring(1, termStr)
-        else
-            result = result | "\n+ " | termStr;
+        -- Add to result with +/- separator, line break every 3 terms
+        if result == "" then (
+            result = termStr;
+            termCount = 1;
+        ) else (
+            lb := if termCount > 0 and termCount % 3 == 0 then " \\\\\n" else "\n";
+            if #termStr > 0 and termStr#0 == "-" then
+                result = result | lb | "- " | substring(1, termStr)
+            else
+                result = result | lb | "+ " | termStr;
+            termCount = termCount + 1;
+        );
     );
     return result;
 );
@@ -181,7 +186,14 @@ genericDApolarIdeal = (I, d) -> (
     highGens := select(genList, g -> isTruncationGen(g));
     allGens := lowGens | highGens;
     strs := apply(allGens, g -> genericDApolarGen(g, d));
-    return concatenate between(",\\;\n", strs);
+    -- Insert line breaks every ~5 generators to avoid page overflow
+    result := "";
+    for i from 0 to #strs - 1 do (
+        if i > 0 then result = result | ",\\; ";
+        if i > 0 and i % 5 == 0 then result = result | "\\\\\n";
+        result = result | strs#i;
+    );
+    return result;
 );
 
 -- ============================================================
@@ -564,20 +576,19 @@ if isCS then (
     outFile << "\\item[Decomposition] $" << algebraName << " = " << concatenate between(" \\# ", compDescs) << "$" << endl;
 );
 
--- Canonical form
--- Canonical form (use display math for line wrapping)
+-- Canonical form (use gathered for line breaks)
 outFile << "\\item[Canonical form]" << endl;
-outFile << "\\[" << endl;
+outFile << "\\[\\begin{gathered}" << endl;
 outFile << "F = " << genericDForm(form, formDegree) << endl;
-outFile << "\\]" << endl;
+outFile << "\\end{gathered}\\]" << endl;
 
--- Apolar ideal (use display math for line wrapping)
+-- Apolar ideal (use gathered for line breaks)
 outFile << "\\item[Apolar ideal]" << endl;
-outFile << "\\[" << endl;
+outFile << "\\[\\begin{gathered}" << endl;
 outFile << "(" << endl;
 outFile << genericDApolarIdeal(apolarIdeal, formDegree) << endl;
 outFile << ")" << endl;
-outFile << "\\]" << endl;
+outFile << "\\end{gathered}\\]" << endl;
 
 outFile << "\\end{description}" << endl;
 
