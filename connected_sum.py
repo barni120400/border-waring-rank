@@ -137,31 +137,17 @@ def connected_sum_disjoint(D_A: GradedDecomposition, D_B: GradedDecomposition) -
     return GradedDecomposition(c=c_fin, V=V_reverted, q=q_fin, d=D_A.d, var_names=var_names)
 
 
-def socle_merge_cov(decomp: GradedDecomposition, n_A: int, n_B: int) -> GradedDecomposition:
-    """Step (b): Change of variables to merge socle and match canonical form.
+def drop_socle_B(decomp: GradedDecomposition, n_A: int, n_B: int) -> GradedDecomposition:
+    """Step (b): Set y_{n_B} = 0 (drop B's socle variable).
 
-    Input: decomposition in variables x_0, x_1,...,x_{n_A}, y_1,...,y_{n_B}
-    Output: decomposition in variables x_0, x_1,...,x_{n_A-1}, x_{n_A}, y_1,...,y_{n_B-1}
-            where x_{n_A} is the merged socle (x_{n_A} + y_{n_B} → x_{n_A})
-
-    The COV is: x_{n_A} → x_{n_A}, y_{n_B} → x_{n_A}, all others unchanged.
-    In matrix form: a column operation that adds col y_{n_B} to col x_{n_A}, then deletes col y_{n_B}.
+    The socle is already represented by x_{n_A} in f_A.
+    Setting y_{n_B} = 0 removes the duplicate socle contribution from f_B.
+    This is just deleting the y_{n_B} column from V.
     """
-    V = Matrix(decomp.V)  # ensure mutable
-    q = list(decomp.q)
-    n_total = V.cols
-
-    col_socle_A = n_A       # x_{n_A} column
     col_socle_B = n_A + n_B  # y_{n_B} column (last B-variable)
 
-    # Add y_{n_B} column to x_{n_A} column (merge socles)
-    for j in range(V.rows):
-        V[j, col_socle_A] = simplify(V[j, col_socle_A] + V[j, col_socle_B])
-
-    # Delete y_{n_B} column — build new matrix without that column
-    V = V[:, :col_socle_B].row_join(V[:, col_socle_B + 1:])
-    q_new = q[:col_socle_B] + q[col_socle_B + 1:]
-
+    V = decomp.V[:, :col_socle_B].row_join(decomp.V[:, col_socle_B + 1:])
+    q_new = decomp.q[:col_socle_B] + decomp.q[col_socle_B + 1:]
     var_names_new = decomp.var_names[:col_socle_B] + decomp.var_names[col_socle_B + 1:]
 
     return GradedDecomposition(c=decomp.c, V=V, q=q_new, d=decomp.d, var_names=var_names_new)
@@ -179,8 +165,8 @@ def connected_sum(D_A: GradedDecomposition, D_B: GradedDecomposition) -> GradedD
     # Step (a): disjoint variable decomposition
     D_disjoint = connected_sum_disjoint(D_A, D_B)
 
-    # Step (b): merge socle variables
-    D_merged = socle_merge_cov(D_disjoint, n_A, n_B)
+    # Step (b): drop B's socle variable (y_{n_B} = 0)
+    D_merged = drop_socle_B(D_disjoint, n_A, n_B)
 
     return D_merged
 
@@ -203,12 +189,13 @@ if __name__ == "__main__":
     print(f"Variables: {result.get_var_names()}")
     print(f"Summands: {result.num_summands} (expected 4)")
 
-    # Expected canonical form: f = x_3 + ½x_1² + ½x_2²
-    # Variables: x_0(w=0), x_1(w=1), x_2(w=1), x_3(w=2)
-    # Moments: <c, v^e> where e = (e_1, e_2, e_3)
-    print(f"\nMoment verification (f = x_3 + ½x_1² + ½x_2²):")
-    for e, expected in [([1,0,0], 0), ([0,1,0], 0), ([0,0,1], 1),
-                         ([2,0,0], 1), ([0,2,0], 1), ([1,1,0], 0)]:
-        m = result.moment(e)
-        status = "✓" if simplify(m - expected) == 0 else f"✗ (got {m})"
+    # Expected canonical form: f = x_2 + ½x_1² + ½y_1²
+    # Variables: x_0(w=0), x_1(w=1), x_2(w=2, socle), y_1(w=1)
+    # Only check moments at weight ≤ socle degree (= 2)
+    print(f"\nMoment verification (f = x_2 + ½x_1² + ½y_1²):")
+    print(f"Variables: {result.get_var_names()}, weights: {result.q}")
+    for e, expected in [([1,0,0], 0), ([0,1,0], 1), ([0,0,1], 0),
+                         ([2,0,0], 1), ([0,0,2], 1)]:
+        m = simplify(result.moment(e))
+        status = "✓" if m == expected else f"✗ (got {m})"
         print(f"  <c, v^{e}> = {m}  expected {expected}  {status}")
