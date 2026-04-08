@@ -463,7 +463,8 @@ identifyComponentType = (A, componentIndices) -> (
 -- ============================================================
 -- Main computation (skipped when TESTING flag is set)
 -- ============================================================
-if not (try TESTING else false) then (
+runMain = try TESTING else false;
+if runMain =!= true then (
 
 pair = generateGorensteinAlgebra(idealDegree, numVars, idealNumber, deformed=>false);
 algebra = pair#0;
