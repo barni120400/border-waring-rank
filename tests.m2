@@ -113,6 +113,9 @@ assert'("A_{8,3,10} is NOT CS", not isConnectedSum(A8310));
 A8314 = (generateGorensteinAlgebra(8, 3, 14, deformed=>false))#0;
 assert'("A_{8,3,14} is NOT CS (v^2=0 trap)", not isConnectedSum(A8314));
 
+A839 = (generateGorensteinAlgebra(8, 3, 9, deformed=>false))#0;
+assert'("A_{8,3,9} (alpha param) is NOT CS", not isConnectedSum(A839));
+
 -- ============================================================
 stdio << endl << "=== detectConnectedSumNaive ===" << endl;
 -- ============================================================
@@ -181,9 +184,9 @@ assert'("A_{7,3,4} comp {y1,y2}: dim=6, ngens=2", d3 == 6 and k3 == 2);
 assert'("A_{7,3,4} comp {y1,y2}: type=4", t3 == 4);
 
 -- ============================================================
-stdio << endl << "=== areIsomorphicIdeals (n=2 only) ===" << endl;
-stdio << "  SKIPPED: known symbol-conflict issue when loaded via tests.m2." << endl;
-stdio << "  Use standalone verify_iso_623_625.m2 for isomorphism checks." << endl;
+stdio << endl << "=== areIsomorphicIdeals ===" << endl;
+stdio << "  REMOVED: function was broken (false positives for n>=3)." << endl;
+stdio << "  Use standalone verify_iso_*.m2 scripts for isomorphism checks." << endl;
 -- ============================================================
 
 -- ============================================================

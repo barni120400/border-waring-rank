@@ -419,53 +419,11 @@ subalgebraHilbert = (A, componentIndices) -> (
     return hilbert;
 );
 
--- Check if k[z_1..z_k]/I is isomorphic to k[z_1..z_k]/J via a linear
--- change of variables. Uses a FLAT ring (all variables in one ring) so
--- that ideal membership and Groebner basis computations are correct.
--- Iff criterion: solutions exist over the algebraic closure iff 1 ∉ ideal.
-areIsomorphicIdeals = (I, J) -> (
-    R := ring I;
-    k := numgens R;
-    baseField := coefficientRing R;
-    -- Create flat ring: baseField[dd, mm_{i,j}, zz_0..zz_{k-1}]
-    -- dd is used for the Rabinowitsch trick to enforce det(M) != 0
-    matVarNames := flatten apply(k, i -> apply(k, j -> (symbol mm)_(i,j)));
-    zVarNames := apply(k, i -> (symbol zz)_i);
-    flatR := baseField[{(symbol detInv)} | matVarNames | zVarNames, MonomialOrder => Eliminate (1 + k*k)];
-    -- dd is at index 0, mm at indices 1..k^2, zz at indices k^2+1..k^2+k
-    detInvVar := flatR_0;
-    zVarsFlat := apply(k, i -> flatR_(1 + k*k + i));
-    mmVarsFlat := apply(k, i -> apply(k, j -> flatR_(1 + i*k + j)));
-    -- Build substitution: z_i -> sum_j mm_{i,j} * zz_j
-    transformedZ := apply(k, i -> sum apply(k, j -> mmVarsFlat#i#j * zVarsFlat#j));
-    -- Map generators of I to flatR, substitute, get transformed generators
-    mapRtoFlat := map(flatR, R, zVarsFlat);
-    gensI := flatten entries gens I;
-    gensJ := flatten entries gens J;
-    -- Transform each generator of I by the linear map
-    transformedGensI := apply(gensI, g -> (
-        gFlat := mapRtoFlat g;
-        sub(gFlat, apply(k, i -> zVarsFlat#i => transformedZ#i))
-    ));
-    -- J in flat ring
-    JFlat := ideal apply(gensJ, g -> mapRtoFlat g);
-    -- For each transformed generator, reduce modulo J and collect equations
-    -- The remainder must be zero: extract z-monomial coefficients and set to 0
-    eqnList := flatten apply(transformedGensI, gT -> (
-        remPoly := gT % JFlat;
-        (monMat, coeffMat) := coefficients(remPoly, Variables => zVarsFlat);
-        flatten entries coeffMat
-    ));
-    -- Add Rabinowitsch constraint: det(M) * dd - 1 = 0 to enforce M invertible
-    M := matrix apply(k, i -> apply(k, j -> mmVarsFlat#i#j));
-    detConstraint := det(M) * detInvVar - 1_(flatR);
-    eqnList = eqnList | {detConstraint};
-    if #eqnList == 0 then return true;
-    eqnIdeal := ideal eqnList;
-    -- 1 not in ideal iff solutions exist over algebraic closure
-    result := (1_(flatR) % eqnIdeal) != 0;
-    return result;
-);
+-- NOTE: areIsomorphicIdeals was removed. It used the % operator in a flat ring
+-- with elimination order, which gave false positives for n >= 3. The correct
+-- approach (witness variables) is too slow for n >= 3. For isomorphism checks,
+-- use the standalone verification scripts (verify_iso_*.m2) with M2's
+-- isWellDefined on explicit maps.
 
 -- Identify the type of a subalgebra component.
 -- Returns (dim, ngens, typeNumber) where typeNumber=0 means unknown.
@@ -495,21 +453,10 @@ identifyComponentType = (A, componentIndices) -> (
         candIdealInSubR := ideal apply(candGens, g -> mapToSubR lift(g, ambCand));
         if subIdeal == candIdealInSubR then return (d, k, t);
     );
-    -- Second pass: check GL_k orbit isomorphism (for when ideals differ but algebras are isomorphic)
-    for t in candidates do (
-        candidatePair := try generateGorensteinAlgebra(d, k, t, deformed=>false) else continue;
-        candAlg := candidatePair#0;
-        candSocleDeg := computeSocleDegree(candAlg);
-        candHilbert := apply(0..candSocleDeg, deg -> hilbertFunction(deg, candAlg));
-        if subHilbert != candHilbert then continue;
-        ambCand := ambient candAlg;
-        mapToSubR := map(subR, ambCand, gens subR);
-        candGens := flatten entries gens ideal candAlg;
-        candIdealInSubR := ideal apply(candGens, g -> mapToSubR lift(g, ambCand));
-        if try areIsomorphicIdeals(subIdeal, candIdealInSubR) else false then (
-            return (d, k, t);
-        );
-    );
+    -- No exact match found. Report the subalgebra ideal for manual identification.
+    print("WARNING: no exact ideal match for component with dim=" | toString d | " ngens=" | toString k);
+    print("  Subalgebra ideal: " | toString flatten entries gens subIdeal);
+    print("  Hilbert function: " | toString subHilbert);
     return (d, k, 0);
 );
 
