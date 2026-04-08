@@ -5,7 +5,7 @@ load "ExtractBorderForms.m2"
 -- ============================================================
 -- Parameters (edit these)
 -- ============================================================
-idealDegree = 2;
+idealDegree = 5;
 numVars = 1;
 idealNumber = 1;
 
@@ -390,9 +390,7 @@ if #csComponents > 1 then (
             "[A_{" | toString(d) | "," | toString(nGens) | ",?}]"
         )
     ));
-    outFile << "Connected sum: $" << concatenate between(" \\# ", compDescs) << "$." << endl;
-) else (
-    outFile << "This algebra is indecomposable." << endl;
+    outFile << "Connected sum: $" << algebraName << " = " << concatenate between(" \\# ", compDescs) << "$." << endl;
 );
 
 outFile << close;
