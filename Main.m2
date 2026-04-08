@@ -315,12 +315,8 @@ outFile = autoFileName << "";
 algebraName = "[A_{" | toString(idealDegree) | "," | toString(numVars) | "," | toString(idealNumber) | "}]";
 labelStr = "alg:e" | toString(idealDegree) | "_n" | toString(numVars) | "_i" | toString(idealNumber);
 
-outFile << "\\item \\label{" << labelStr << "} $" << algebraName << "$. Parameters from Casnati's paper:" << endl;
-outFile << "\\[" << endl;
-outFile << "e = " << idealDegree << ", \\quad n = " << numVars << ", \\quad \\text{idealNumber} = " << idealNumber << endl;
-outFile << "\\]" << endl;
+outFile << "\\item \\label{" << labelStr << "} $" << algebraName << "$." << endl;
 outFile << endl;
-
 outFile << "Ideal: " << endl;
 outFile << "\\[" << endl;
 -- Format ideal generators
