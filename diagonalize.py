@@ -23,24 +23,30 @@ def is_diagonalized(decomp: GradedDecomposition) -> bool:
     Diagonalized means:
     - Row 0 of V: (1, 0, 0, ..., 0) — L_0 = x_0
     - For k = 1,...,n: V[k, k] = 1 (diagonal entry)
-    - For k = 1,...,n: V[k, i] = 0 for i > k (upper triangle is zero)
+    - For k = 1,...,n and i > k: if q[i] >= q[k] then V[k, i] = 0
+      (upper triangle is zero for variables at equal or higher weight)
+
+    Note: V[k, i] may be nonzero when q[i] < q[k] (variable i has
+    strictly lower weight than k). This is the lower-triangular
+    structure in the WEIGHT ordering, not necessarily the index ordering.
     """
     V = decomp.V
     n = decomp.n_vars
+    q = decomp.q
 
-    # Check row 0: should be (1, 0, ..., 0)
+    # Check row 0
     if V[0, 0] != 1:
         return False
     for i in range(1, V.cols):
         if V[0, i] != 0:
             return False
 
-    # Check rows 1..n: lower triangular with 1 on diagonal
+    # Check rows 1..n
     for k in range(1, min(n + 1, V.rows)):
         if V[k, k] != 1:
             return False
         for i in range(k + 1, V.cols):
-            if V[k, i] != 0:
+            if q[i] >= q[k] and V[k, i] != 0:
                 return False
 
     return True
@@ -117,13 +123,14 @@ def diagonalize(decomp: GradedDecomposition):
                     assigned_rows.discard(pivot_row)
                     assigned_rows.add(var_idx)
 
-            # Step 3: Eliminate upper triangle — zero out V[k, var_idx]
-            # for all assigned rows k < var_idx
-            # Column operation: col_{var_idx} -= entry * col_k
-            # (i.e., x_{var_idx} → x_{var_idx} - entry * x_k)
+            # Step 3: Eliminate entries — zero out V[k, var_idx]
+            # for all assigned rows k where q[k] <= q[var_idx]
+            # (eliminate variables at same or lower weight)
             for k in sorted(assigned_rows):
-                if k >= var_idx:
+                if k == var_idx:
                     continue
+                if q[k] > q[var_idx]:
+                    continue  # skip higher-weight variables
                 entry = V[k, var_idx]
                 if entry != 0:
                     for j in range(V.rows):

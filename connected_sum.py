@@ -175,11 +175,41 @@ def drop_socle_B(decomp: GradedDecomposition, n_A: int, n_B: int) -> GradedDecom
     return GradedDecomposition(c=decomp.c, V=V, q=q_new, d=decomp.d, var_names=var_names_new)
 
 
+def sort_variables_by_weight(decomp: GradedDecomposition) -> GradedDecomposition:
+    """Sort variables by weight and rename to x_0, x_1, x_2, ...
+
+    Permutes columns of V to put weights in non-decreasing order.
+    This is a change of variables (column permutation) which is its
+    own inverse — no separate revert needed since it's just renaming.
+
+    For variables at the same weight, the original order is preserved
+    (stable sort).
+    """
+    q = decomp.q
+    n = decomp.n_vars
+
+    # Build sort permutation: indices sorted by weight (stable)
+    # Column 0 (x_0, weight 0) always stays first
+    perm = [0] + sorted(range(1, n + 1), key=lambda i: q[i])
+
+    # Permute columns of V
+    V_sorted = decomp.V[:, perm]
+
+    # Permute weights
+    q_sorted = [q[i] for i in perm]
+
+    # New variable names: x_0, x_1, ..., x_n
+    var_names = [f"x_{i}" for i in range(n + 1)]
+
+    return GradedDecomposition(c=decomp.c, V=V_sorted, q=q_sorted, d=decomp.d, var_names=var_names)
+
+
 def connected_sum(D_A: GradedDecomposition, D_B: GradedDecomposition) -> GradedDecomposition:
     """Full connected sum: compute decomposition of canonical f_{A#B}.
 
     1. Compute decomposition for f_A + f_B (disjoint variables)
-    2. Apply COV to merge socles and match canonical form
+    2. Drop B's socle variable (y_{n_B} = 0)
+    3. Sort variables by weight, rename to x_0, x_1, ..., x_n
     """
     n_A = D_A.n_vars
     n_B = D_B.n_vars
@@ -188,9 +218,12 @@ def connected_sum(D_A: GradedDecomposition, D_B: GradedDecomposition) -> GradedD
     D_disjoint = connected_sum_disjoint(D_A, D_B)
 
     # Step (b): drop B's socle variable (y_{n_B} = 0)
-    D_merged = drop_socle_B(D_disjoint, n_A, n_B)
+    D_dropped = drop_socle_B(D_disjoint, n_A, n_B)
 
-    return D_merged
+    # Step (c): sort variables by weight, rename to x_0, x_1, ...
+    D_sorted = sort_variables_by_weight(D_dropped)
+
+    return D_sorted
 
 
 if __name__ == "__main__":
