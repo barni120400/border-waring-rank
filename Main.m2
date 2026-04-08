@@ -312,7 +312,7 @@ autoFileName = "output/auto_e" | toString(idealDegree) | "_n" | toString(numVars
 outFile = autoFileName << "";
 
 -- Label for cross-referencing
-algebraName = "A_{" | toString(idealDegree) | "," | toString(numVars) | "," | toString(idealNumber) | "}";
+algebraName = "[A_{" | toString(idealDegree) | "," | toString(numVars) | "," | toString(idealNumber) | "}]";
 labelStr = "alg:e" | toString(idealDegree) | "_n" | toString(numVars) | "_i" | toString(idealNumber);
 
 outFile << "\\item \\label{" << labelStr << "} $" << algebraName << "$. Parameters from Casnati's paper:" << endl;
@@ -383,11 +383,11 @@ if #csComponents > 1 then (
         if nGens == 1 then (
             -- Ideal1: A_{d,1,1}, link to its example
             summandLabel := "alg:e" | toString(d) | "_n1_i1";
-            summandName := "A_{" | toString(d) | ",1,1}";
+            summandName := "[A_{" | toString(d) | ",1,1}]";
             "\\hyperref[" | summandLabel | "]{" | summandName | "}"
         ) else (
             -- Multi-generator: report dimension and number of generators
-            "A_{" | toString(d) | "," | toString(nGens) | ",?}"
+            "[A_{" | toString(d) | "," | toString(nGens) | ",?}]"
         )
     ));
     outFile << "Connected sum: $" << concatenate between(" \\# ", compDescs) << "$." << endl;
