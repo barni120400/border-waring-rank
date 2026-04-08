@@ -194,16 +194,79 @@ texMatrix = M -> (
 );
 
 -- ============================================================
--- Connected sum detection
+-- Intrinsic connected sum detection
 -- ============================================================
--- Build a graph on generators {y_1,...,y_n}: edge (i,j) iff y_i * y_j != 0 in A.
--- Connected csComponents give the connected sum decomposition.
--- Returns list of csComponents, each a list of 0-based variable indices.
-detectConnectedSum = A -> (
+-- Checks if A is a connected sum, independent of the choice of generators.
+--
+-- Criterion: A is a connected sum (1+(n-1) split) iff there exists
+-- v in m/m^2 such that:
+--   (1) rank(L_v) <= 1, where L_v: m/m^2 -> A is multiplication by v, AND
+--   (2) v^2 != 0 in A (so the kernel of L_v is a complement to v).
+--
+-- This detects 1+(n-1) splits only. For multiplicity <= 9 this is sufficient:
+-- the smallest indecomposable algebra with >= 2 generators has dim 6 (A_{6,2,4}),
+-- so a k+(n-k) split with k >= 2 where both sides are indecomposable requires
+-- dim >= 6+6-2 = 10 > 9. Hence within the Casnati classification (dim <= 9),
+-- every connected sum has at least one single-generator component.
+--
+-- Method: polynomial system in n+2 variables (alpha_i, dI1, dI2).
+-- All 2x2 minors of the multiplication matrix M(alpha) = 0 (rank <= 1),
+-- plus Rabinowitsch constraints for v != 0 and v^2 != 0.
+-- Solved exactly by Groebner basis over ZZ/p.
+isConnectedSum = A -> (
+    varList := flatten entries vars A;
+    basisA := flatten entries basis A;
+    ambA := ambient A;
+    n := #varList;
+    if n <= 1 then return false;
+    -- Polynomial ring: alpha_0..alpha_{n-1}, dI1 (v != 0), dI2 (v^2 != 0)
+    varNames := apply(n, i -> (symbol al)_i) | {(symbol dI1), (symbol dI2)};
+    S := (ZZ/p)[varNames];
+    aVars := apply(n, i -> S_i);
+    dI1v := S_n;
+    dI2v := S_(n+1);
+    -- Build multiplication matrix M(alpha): M_{k,j} = sum_i alpha_i * coeff(basisA_k, e_i*e_j)
+    M := matrix apply(#basisA, k -> apply(n, j -> (
+        c := 0_S;
+        for i from 0 to n-1 do (
+            prod := varList#i * varList#j;
+            coeff := coefficient(lift(basisA#k, ambA), lift(prod, ambA));
+            c = c + aVars#i * sub(coeff, ZZ/p);
+        );
+        c
+    )));
+    -- Rank <= 1: all 2x2 minors = 0
+    minorIdeal := minors(2, M);
+    minorEqns := select(flatten entries gens minorIdeal, eq -> eq != 0_S);
+    -- v^2 = sum_{i,j} alpha_i * alpha_j * (e_i * e_j), extract each basis coordinate
+    vSquaredCoeffs := apply(#basisA, k -> (
+        c := 0_S;
+        for i from 0 to n-1 do for j from 0 to n-1 do (
+            prod := varList#i * varList#j;
+            coeff := coefficient(lift(basisA#k, ambA), lift(prod, ambA));
+            c = c + aVars#i * aVars#j * sub(coeff, ZZ/p);
+        );
+        c
+    ));
+    nonzeroQs := select(vSquaredCoeffs, q -> q != 0_S);
+    if #nonzeroQs == 0 then return false;
+    -- Try each alpha_i (v != 0) and each Q_k (v^2 != 0)
+    for i from 0 to n-1 do (
+        for qk in nonzeroQs do (
+            testEqns := minorEqns | {aVars#i * dI1v - 1_S, qk * dI2v - 1_S};
+            I := ideal testEqns;
+            if (1_S % I) != 0 then return true;
+        );
+    );
+    return false;
+);
+
+-- Old naive detection (on given generators only) — kept for the decomposition output.
+-- Returns list of components, each a list of 0-based variable indices.
+detectConnectedSumNaive = A -> (
     varList := flatten entries vars A;
     n := #varList;
     if n <= 1 then return {toList(0..n-1)};
-    -- Build adjacency lists
     adj := new MutableList from apply(n, i -> {});
     for i from 0 to n-1 do (
         for j from i+1 to n-1 do (
@@ -213,7 +276,6 @@ detectConnectedSum = A -> (
             );
         );
     );
-    -- BFS to find connected csComponents
     visited := new MutableList from apply(n, i -> false);
     csComponents := {};
     for start from 0 to n-1 do (
@@ -519,9 +581,11 @@ if variableWeights != {} then (
     outFile << "\\item[Weights] This algebra does not admit a grading." << endl;
 );
 
--- Connected sum detection
-csComponents = detectConnectedSum(algebra);
-if #csComponents > 1 then (
+-- Connected sum detection (intrinsic, basis-independent)
+isCS = isConnectedSum(algebra);
+-- Use naive decomposition for displaying the components (works when given generators split)
+csComponents = if isCS then detectConnectedSumNaive(algebra) else {toList(0..numgens(ambient algebra)-1)};
+if isCS then (
     compDescs := apply(#csComponents, idx -> (
         (d, k, t) := identifyComponentType(algebra, csComponents#idx);
         if t > 0 then (
