@@ -311,83 +311,69 @@ MTs = apply(varsList, v -> multiplicationOperatorTranspose(v, H, B, ML));
 autoFileName = "output/auto_e" | toString(idealDegree) | "_n" | toString(numVars) | "_i" | toString(idealNumber) | ".tex";
 outFile = autoFileName << "";
 
--- Label for cross-referencing
+-- Label and algebra name
 algebraName = "[A_{" | toString(idealDegree) | "," | toString(numVars) | "," | toString(idealNumber) | "}]";
 labelStr = "alg:e" | toString(idealDegree) | "_n" | toString(numVars) | "_i" | toString(idealNumber);
 
-outFile << "\\item \\label{" << labelStr << "} $" << algebraName << "$." << endl;
-outFile << endl;
-outFile << "Ideal: " << endl;
-outFile << "\\[" << endl;
--- Format ideal generators
+-- Format ideal generators inline
 idealGens = flatten entries gens idealA;
 idealStr = concatenate between(",\\; ", apply(idealGens, g -> cleanTex g));
-outFile << "(" << idealStr << ")" << endl;
-outFile << "\\]" << endl;
-outFile << endl;
 
-outFile << "Generators:" << endl;
-outFile << "\\[" << endl;
+-- Format variable list for the ring
+varListStr = concatenate between(", ", apply(flatten entries vars(ambient algebra), v -> cleanTex v));
+
+-- First line: algebra name = K[vars]/(ideal)
+outFile << "\\item \\label{" << labelStr << "} $" << algebraName << " = \\bK[" << varListStr << "]/(" << idealStr << ")$." << endl;
+
+-- Basis inline
 basisStr = concatenate between(",\\; ", apply(sortedBasisA, b -> cleanTex b));
-outFile << basisStr << endl;
-outFile << "\\]" << endl;
-outFile << endl;
+outFile << "Basis: $" << basisStr << "$." << endl;
 
-outFile << "Form:" << endl;
-outFile << "\\[" << endl;
-outFile << genericDForm(form, formDegree) << endl;
-outFile << "\\]" << endl;
-outFile << endl;
-
+-- Weights inline (or note about no grading)
 if variableWeights != {} then (
-    outFile << "Variable weights:" << endl;
-    outFile << "\\[" << endl;
-    weightStrs = apply(dimA, i -> "q_" | toString(i) | " = " | toString(
+    weightVals = apply(dimA, i -> toString(
         if i == 0 then 0
         else (
             exps := flatten exponents sortedBasisA#i;
             sum apply(length variableWeights, j -> exps#j * variableWeights#j)
         )
     ));
-    outFile << concatenate between(",\\; ", weightStrs) << endl;
-    outFile << "\\]" << endl;
-    outFile << endl;
+    outFile << "Weights: $\\vq = (" << concatenate between(", ", weightVals) << ")$." << endl;
 ) else (
     outFile << "This algebra does not admit a grading." << endl;
-    outFile << endl;
 );
-
-outFile << "Apolar ideal:" << endl;
-outFile << "\\[" << endl;
-outFile << "(" << endl;
-outFile << genericDApolarIdeal(apolarIdeal, formDegree) << endl;
-outFile << ")" << endl;
-outFile << "\\]" << endl;
-outFile << endl;
 
 -- Connected sum detection
 csComponents = detectConnectedSum(algebra);
 if #csComponents > 1 then (
     varList := flatten entries vars algebra;
     compDims := apply(csComponents, comp -> subalgebraDim(algebra, comp));
-    -- For each component, identify the summand type.
-    -- Single-generator components are always Ideal1 (type 1) with e = subalgebra dim.
-    -- Multi-generator components would need matching (TODO for future).
     compDescs := apply(#csComponents, idx -> (
         d := compDims#idx;
         nGens := #(csComponents#idx);
         if nGens == 1 then (
-            -- Ideal1: A_{d,1,1}, link to its example
             summandLabel := "alg:e" | toString(d) | "_n1_i1";
             summandName := "[A_{" | toString(d) | ",1,1}]";
             "\\hyperref[" | summandLabel | "]{" | summandName | "}"
         ) else (
-            -- Multi-generator: report dimension and number of generators
             "[A_{" | toString(d) | "," | toString(nGens) | ",?}]"
         )
     ));
     outFile << "Connected sum: $" << algebraName << " = " << concatenate between(" \\# ", compDescs) << "$." << endl;
 );
+
+-- Form as display math
+outFile << "\\[" << endl;
+outFile << "F = " << genericDForm(form, formDegree) << endl;
+outFile << "\\]" << endl;
+
+-- Apolar ideal as display math
+outFile << "Apolar ideal:" << endl;
+outFile << "\\[" << endl;
+outFile << "(" << endl;
+outFile << genericDApolarIdeal(apolarIdeal, formDegree) << endl;
+outFile << ")" << endl;
+outFile << "\\]" << endl;
 
 outFile << close;
 print("Wrote " | autoFileName);
