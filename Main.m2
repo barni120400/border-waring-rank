@@ -64,21 +64,33 @@ genericDForm = (F, d) -> (
         for i from 1 to n-1 do (
             if exps#i > 0 then nonZeroExps = append(nonZeroExps, (i, exps#i));
         );
-        -- Build the \binom{d}{...} part
+        -- Build the \binom{d}{...} part, accounting for non-multinomial coefficients
         j := d - a;  -- sum of non-x_0 exponents
         binomStr := "";
         if j == 0 then (
-            -- Pure x_0^d term — coefficient should be 1
-            binomStr = "";
+            -- Pure x_0^d term
+            coeffStr := cleanTex coeff;
+            if coeff != 1 then binomStr = coeffStr | " ";
         ) else (
+            -- Compute the expected multinomial coefficient d!/(a! * e1! * ... * ek!)
+            allExps := {a} | apply(nonZeroExps, pair -> pair#1);
+            expectedMultinom := (d)! / product apply(allExps, e -> e!);
+            -- Ratio of actual coefficient to expected multinomial
+            ratio := coeff / expectedMultinom;
             nonZeroExpValues := apply(nonZeroExps, pair -> pair#1);
-            if #nonZeroExpValues == 1 then (
-                e1 := nonZeroExpValues#0;
-                binomStr = "\\binom{d}{" | toString(e1) | "}";
+            binomPart := if #nonZeroExpValues == 1 then (
+                "\\binom{d}{" | toString(nonZeroExpValues#0) | "}"
             ) else (
-                -- Multiple non-x_0 variables: \binom{d}{e1, e2, ...}
                 expStrs := apply(nonZeroExpValues, e -> toString e);
-                binomStr = "\\binom{d}{" | concatenate between(", ", expStrs) | "}";
+                "\\binom{d}{" | concatenate between(", ", expStrs) | "}"
+            );
+            if ratio == 1 then (
+                binomStr = binomPart;
+            ) else if ratio == -1 then (
+                binomStr = "-" | binomPart;
+            ) else (
+                ratioStr := cleanTex ratio;
+                binomStr = ratioStr | " " | binomPart;
             );
         );
         -- Build the x_0 power part (always use generic d notation)
@@ -109,9 +121,11 @@ genericDForm = (F, d) -> (
             if x0Str != "" then termStr = termStr | " ";
             termStr = termStr | varStr;
         );
-        -- Add to result with + separator
+        -- Add to result with +/- separator
         if result == "" then
             result = termStr
+        else if #termStr > 0 and termStr#0 == "-" then
+            result = result | "\n- " | substring(1, termStr)
         else
             result = result | "\n+ " | termStr;
     );
