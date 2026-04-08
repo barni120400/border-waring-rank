@@ -37,11 +37,33 @@ def connected_sum_disjoint(D_A: GradedDecomposition, D_B: GradedDecomposition) -
     r_A = D_A.r
     r_B = D_B.r
 
-    logger.info(f"Connected sum: D_A({r_A+1} summands, {n_A} vars) # D_B({r_B+1} summands, {n_B} vars)")
+    logger.info(f"Connected sum: D_A({r_A+1} summands, {n_A} vars, q̂={D_A.weighted_socle_degree}) "
+                f"# D_B({r_B+1} summands, {n_B} vars, q̂={D_B.weighted_socle_degree})")
 
-    # Step 0: Diagonalize
-    D_A_diag, A0_A = diagonalize(D_A)
-    D_B_diag, A0_B = diagonalize(D_B)
+    # Step 0a: Rescale weights to common socle degree q̂ = lcm(q̂_A, q̂_B)
+    q_hat_A = D_A.weighted_socle_degree
+    q_hat_B = D_B.weighted_socle_degree
+    from math import gcd
+    q_hat = (q_hat_A * q_hat_B) // gcd(q_hat_A, q_hat_B)
+    scale_A = q_hat // q_hat_A
+    scale_B = q_hat // q_hat_B
+
+    # Rescale weight vectors
+    D_A_scaled = GradedDecomposition(
+        c=D_A.c, V=D_A.V,
+        q=[w * scale_A for w in D_A.q],
+        d=D_A.d, var_names=D_A.var_names
+    )
+    D_B_scaled = GradedDecomposition(
+        c=D_B.c, V=D_B.V,
+        q=[w * scale_B for w in D_B.q],
+        d=D_B.d, var_names=D_B.var_names
+    )
+    logger.info(f"Rescaled weights to q̂={q_hat}: q_A={D_A_scaled.q}, q_B={D_B_scaled.q}")
+
+    # Step 0b: Diagonalize
+    D_A_diag, A0_A = diagonalize(D_A_scaled)
+    D_B_diag, A0_B = diagonalize(D_B_scaled)
     assert is_diagonalized(D_A_diag)
     assert is_diagonalized(D_B_diag)
     logger.info(f"Diagonalized. V_A:\n{D_A_diag.V}\nV_B:\n{D_B_diag.V}")

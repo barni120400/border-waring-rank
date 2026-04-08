@@ -63,7 +63,7 @@ def diagonalize(decomp: GradedDecomposition):
     4. Scale column k so V[k, k] = 1
     Track all column operations in A_0.
     """
-    V = decomp.V.copy()
+    V = Matrix(decomp.V)  # ensure mutable copy
     c = list(decomp.c)
     q = list(decomp.q)
     n = decomp.n_vars
