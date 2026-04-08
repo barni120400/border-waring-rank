@@ -311,7 +311,11 @@ MTs = apply(varsList, v -> multiplicationOperatorTranspose(v, H, B, ML));
 autoFileName = "output/auto_e" | toString(idealDegree) | "_n" | toString(numVars) | "_i" | toString(idealNumber) | ".tex";
 outFile = autoFileName << "";
 
-outFile << "\\item Parameters from Casnati's paper:" << endl;
+-- Label for cross-referencing
+algebraName = "A_{" | toString(idealDegree) | "," | toString(numVars) | "," | toString(idealNumber) | "}";
+labelStr = "alg:e" | toString(idealDegree) | "_n" | toString(numVars) | "_i" | toString(idealNumber);
+
+outFile << "\\item \\label{" << labelStr << "} $" << algebraName << "$. Parameters from Casnati's paper:" << endl;
 outFile << "\\[" << endl;
 outFile << "e = " << idealDegree << ", \\quad n = " << numVars << ", \\quad \\text{idealNumber} = " << idealNumber << endl;
 outFile << "\\]" << endl;
@@ -369,11 +373,21 @@ outFile << endl;
 csComponents = detectConnectedSum(algebra);
 if #csComponents > 1 then (
     varList := flatten entries vars algebra;
-    -- Build description: G_{d1} # G_{d2} # ...
     compDims := apply(csComponents, comp -> subalgebraDim(algebra, comp));
+    -- For each component, identify the summand type.
+    -- Single-generator components are always Ideal1 (type 1) with e = subalgebra dim.
+    -- Multi-generator components would need matching (TODO for future).
     compDescs := apply(#csComponents, idx -> (
-        compVarStr := concatenate between(", ", apply(csComponents#idx, i -> cleanTex varList#i));
-        "\\{" | compVarStr | "\\}" | " (\\dim = " | toString(compDims#idx) | ")"
+        d := compDims#idx;
+        nGens := #(csComponents#idx);
+        if nGens == 1 then (
+            -- Ideal1: A_{d,1,1}, link to its example
+            summandLabel := "alg:e" | toString(d) | "_n1_i1";
+            "\\cref{" | summandLabel | "}"
+        ) else (
+            -- Multi-generator: report dimension and number of generators
+            "A_{" | toString(d) | "," | toString(nGens) | ",?}"
+        )
     ));
     outFile << "Connected sum: $" << concatenate between(" \\# ", compDescs) << "$." << endl;
 ) else (
